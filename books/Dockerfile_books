@@ -1,0 +1,40 @@
+FROM python:3.6-alpine
+
+RUN adduser -D books
+
+WORKDIR /home/books
+
+COPY requirements.txt requirements.txt
+RUN python -m venv venv
+
+RUN venv/bin/pip install --upgrade pip wheel
+RUN venv/bin/pip install -r requirements.txt
+#RUN venv/bin/pip install gunicorn pymysql
+RUN venv/bin/pip install gunicorn
+
+
+COPY app app
+COPY books.py config.py boot.sh ./
+COPY .flaskenv ./
+
+RUN chmod +x boot.sh
+
+RUN chown -R books:books ./
+USER books
+
+EXPOSE 5000
+
+ENTRYPOINT ["./boot.sh"]
+
+# sudo docker build -t books:latest .
+# sudo docker run --name books  -p 8000:5000 --rm books:latest
+
+
+# sudo docker run --name mysql_books -d -e MYSQL_RANDOM_ROOT_PASSWORD=yes \
+#  -e MYSQL_DATABASE=books -e MYSQL_USER=books -e MYSQL_PASSWORD=books \
+#      mysql/mysql-server:5.7
+
+# sudo docker run --name books -d -p 8000:5000 --rm  \
+#     --link mysql_books:dbserver \
+#     -e DATABASE_URL=mysql_books+pymysql://books:books@dbserver/books \
+#     books:latest
